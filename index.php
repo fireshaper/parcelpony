@@ -128,6 +128,7 @@
 							  <option value="ups">UPS</option>
 							  <option value="fedex">FedEx</option>
 							  <option value="dhl">DHL</option>
+							  <option value="aramex">Aramex</option>
 							</select>
 
 							<input type="submit" value="Add" class="track-form-input">
@@ -239,6 +240,9 @@
 											break;
 										case 'dhl':
 											$carrier = 'DHL';
+											break;
+										case 'aramex':
+											$carrier = 'Aramex';
 											break;
 									}
 
@@ -366,27 +370,3 @@
 </div>
 </body>
 </html>
-
-iv>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>
-</body>
-</html>
-
-e try again."; 
-							} ?>	
-							
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>
-</body>
-</html>
-
