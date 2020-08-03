@@ -21,6 +21,7 @@ a {
   box-sizing: border-box;
   position: relative;
 }
+
 .package-inbox-view {
   box-sizing: border-box;
 }
@@ -50,6 +51,18 @@ a {
   box-sizing: border-box;
   background: #f2f2f2;
   border-bottom: 10px solid #f2f2f2;
+}
+
+.footer {
+  min-width: 100%;
+  float: left;
+  position: relative;
+  min-height: 1px;
+  box-sizing: border-box;
+  background: #f2f2f2;
+  border-bottom: 10px solid #f2f2f2;
+  text-align: center;
+  color: #adadad;
 }
 
 .package-container {
@@ -388,9 +401,24 @@ a {
   position: fixed;
   min-height: 1px;
   box-sizing: border-box;
-  height: 100%;
   overflow-y: scroll;
   overflow-x: scroll;
+  position: relative;
+  min-height: 1px;
+  background: #f2f2f2;
+  border-bottom: 10px solid #f2f2f2;
+}
+
+.footer {
+  min-width: 100%;
+  float: left;
+  position: relative;
+  min-height: 1px;
+  box-sizing: border-box;
+  background: #f2f2f2;
+  border-bottom: 10px solid #f2f2f2;
+  text-align: center;
+  color: #adadad;
 }
 
 .package-container {

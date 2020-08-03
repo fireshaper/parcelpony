@@ -13,10 +13,11 @@
 				<div class="package-view">
 					<div class="package-container">
 						<?php
-						
+
 							/*Get an API Token from my.trackinghive.com and put it here */
 							$bearerToken = '';
-							
+
+							$version = "0.2.1";
 							$comment = "No title";
 							
 							$now = new DateTime();
@@ -59,6 +60,7 @@
 								$carrier = $_POST["carrier"];
 								$comment = $_POST["comment"];
 
+								
 								//----begin trackhive code to add a parcel to your account
 								try {
 									$ch = curl_init();
@@ -236,6 +238,23 @@
 											$carrier = $carriers->title;
 										}
 									}
+									
+									/*
+									switch ($carrier_slug){
+										case 'usps':
+											$carrier = 'USPS';
+											break;
+										case 'ups':
+											$carrier = 'UPS';
+											break;
+										case 'fedex':
+											$carrier = 'FedEx';
+											break;
+										case 'dhl':
+											$carrier = 'DHL';
+											break;
+									}
+									*/
 
 									$trackingNum = $mydata->tracking_number;
 									
@@ -243,7 +262,7 @@
 									$modTime = strtotime($modTS);
 									$nowTS = $now->getTimestamp();
 									$modifiedTime = "About " . date('g', $nowTS - $modTime) . " hours ago";
-									
+									//echo "About " . date('g', $nowTS - $modTime) . " hours ago";
 										
 								?>
 								<div class="parcel-item">	
@@ -296,6 +315,9 @@
 																} else if ($infoStatus == "OutForDelivery") {
 																	$statusStyle = 'style="background-color: #f7d418 !important;border-color: #f7d418 !important;"';
 																	$trackStatus = "Out for Delivery";
+																} else if ($infoStatus == "Pending") {
+																	$statusStyle = 'style="background-color: #858585 !important;border-color: #858585 !important;"';
+																	$trackStatus = "Pending";
 																} else {
 																	$statusStyle = 'style="background-color: #000 !important;border-color: #000 !important;"';
 																	$trackStatus = "N/A";
@@ -313,6 +335,8 @@
 																	$statusStyle = 'style="border-color: #3fb00b !important;"';
 																} else if ($infoStatus == "OutForDelivery") {
 																	$statusStyle = 'style="border-color: #f7d418 !important;"';
+																} else if ($infoStatus == "Pending") {
+																	$statusStyle = 'style="border-color: #858585 !important;"';
 																} else {
 																	$statusStyle = 'style="border-color: #000 !important;"';
 																}
@@ -340,7 +364,8 @@
 											<div class="media-right"> 
 												<div class="last-update"> <?php echo $modifiedTime; ?> </div>
 												<div class="delete-button"> 
-													
+													<!--<i class="fa fa-trash"></i>
+													<span>Delete Parcel</span> -->
 													<form method="post" action="index.php">
 														<input type="submit" name="action" value="Delete"/>
 														<input type="hidden" name="id" value="<?php echo $parcelID; ?>"/>
@@ -355,6 +380,10 @@
 							
 						</div>
 					</div>
+				</div>
+				<div class="footer">
+					<?php echo "Version " . $version . " | "; ?>
+					<a href="https://github.com/fireshaper/parcelpony">Github</a> | made by fireshaper
 				</div>
 			</div>
 		</div>
