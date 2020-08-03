@@ -1,7 +1,10 @@
  /* For desktop: */
+html, body {
+  height: 100%;
+}
 body {
   margin: 0;
-  height: 1000px;
+  background: #94b5eb;
 }
 h1 {
   
@@ -15,12 +18,8 @@ a {
 
 .main {
   padding: 20px 0;
-  border-top: 1px solid #e5e5e5;
-  border-bottom: 1px solid #e5e5e5;
-  background: #94b5eb;
   box-sizing: border-box;
   position: relative;
-  height: inherit;
 }
 .package-inbox-view {
   box-sizing: border-box;
@@ -38,8 +37,7 @@ a {
 .content {
   margin-left: -15px;
   margin-right: -15px;
-  box-sizing: border-box;
-  
+  box-sizing: border-box;  
 }
 
 .package-view {
@@ -50,15 +48,16 @@ a {
   position: relative;
   min-height: 1px;
   box-sizing: border-box;
+  background: #f2f2f2;
+  border-bottom: 10px solid #f2f2f2;
 }
 
 .package-container {
   position: relative;
-  height: 100%;
-  min-height: 365px;
-  margin-top: 5px;
+  min-height: 100%;
+  margin-top: 10px;
   padding: 20px;
-  margin-bottom: 5px;
+  margin-bottom: 10px;
   background: #fff;
   box-shadow: 0px 0px 4px 0px rgba(0,0,0,0.2);
   border-radius: 2px;

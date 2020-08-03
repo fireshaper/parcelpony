@@ -13,10 +13,10 @@
 				<div class="package-view">
 					<div class="package-container">
 						<?php
-
+						
 							/*Get an API Token from my.trackinghive.com and put it here */
 							$bearerToken = '';
-
+							
 							$comment = "No title";
 							
 							$now = new DateTime();
@@ -59,16 +59,6 @@
 								$carrier = $_POST["carrier"];
 								$comment = $_POST["comment"];
 
-								/*
-								if (!is_file($file)) {
-									file_put_contents($file, $trackingNum);
-								} else {
-									$parcelFile = fopen($file, 'a');
-									fwrite($parcelFile, $trackingNum . "," . $carrier . PHP_EOL);
-									fclose($parcelFile);
-								}
-								*/
-								
 								//----begin trackhive code to add a parcel to your account
 								try {
 									$ch = curl_init();
@@ -111,7 +101,7 @@
 								//print_r($json);
 								
 								if ($json['meta']['code'] == 200) {
-									echo '<font color="green">Package added!</font><br /><br />';
+									echo '<font color="red">Package added!</font><br /><br />';
 								}
 							}
 						?>
@@ -122,13 +112,27 @@
 							<input type="text" name="tracking" placeholder="tracking number" class="track-form-input">
 
 							<input type="text" name="comment" placeholder="title (optional)" class="track-form-input">
-
+							
 							<select name="carrier" id="carrier" class="track-form-input">
-							  <option value="usps">USPS</option>
-							  <option value="ups">UPS</option>
-							  <option value="fedex">FedEx</option>
-							  <option value="dhl">DHL</option>
-							  <option value="aramex">Aramex</option>
+							
+							<?php
+							/*Get all carriers*/
+								$ch = curl_init();
+
+								curl_setopt($ch, CURLOPT_URL, "https://api.trackinghive.com/couriers/list");
+								curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+								curl_setopt($ch, CURLOPT_HEADER, FALSE);
+
+								$response = curl_exec($ch);
+								curl_close($ch);
+								
+								$carrier_json = json_decode($response, false);
+								
+								foreach ($carrier_json->data as $carriers) {
+										echo '<option value="' . $carriers->slug . '">' . $carriers->title . '</option>';
+								}
+							?>
+								
 							</select>
 
 							<input type="submit" value="Add" class="track-form-input">
@@ -160,7 +164,6 @@
 
 								//print_r($json);
 								
-								try {
 								foreach ($json->data as $mydata) {
 									$custom_fields = explode(':', $mydata->custom_fields);
 									$comment = $custom_fields[1];
@@ -228,22 +231,10 @@
 										$infoMore = "N/A";
 									}
 									
-									switch ($carrier_slug){
-										case 'usps':
-											$carrier = 'USPS';
-											break;
-										case 'ups':
-											$carrier = 'UPS';
-											break;
-										case 'fedex':
-											$carrier = 'FedEx';
-											break;
-										case 'dhl':
-											$carrier = 'DHL';
-											break;
-										case 'aramex':
-											$carrier = 'Aramex';
-											break;
+									foreach ($carrier_json->data as $carriers){
+										if ($carrier_slug == $carriers->slug){
+											$carrier = $carriers->title;
+										}
 									}
 
 									$trackingNum = $mydata->tracking_number;
@@ -252,7 +243,7 @@
 									$modTime = strtotime($modTS);
 									$nowTS = $now->getTimestamp();
 									$modifiedTime = "About " . date('g', $nowTS - $modTime) . " hours ago";
-									//echo "About " . date('g', $nowTS - $modTime) . " hours ago";
+									
 										
 								?>
 								<div class="parcel-item">	
@@ -302,6 +293,9 @@
 																} else if ($infoStatus == "Delivered") {
 																	$statusStyle = 'style="background-color: #3fb00b !important;border-color: #3fb00b !important;"';
 																	$trackStatus = "Delivered";
+																} else if ($infoStatus == "OutForDelivery") {
+																	$statusStyle = 'style="background-color: #f7d418 !important;border-color: #f7d418 !important;"';
+																	$trackStatus = "Out for Delivery";
 																} else {
 																	$statusStyle = 'style="background-color: #000 !important;border-color: #000 !important;"';
 																	$trackStatus = "N/A";
@@ -317,6 +311,8 @@
 																	$statusStyle = 'style="border-color: #373852 !important;"';
 																} else if ($infoStatus == "Delivered") {
 																	$statusStyle = 'style="border-color: #3fb00b !important;"';
+																} else if ($infoStatus == "OutForDelivery") {
+																	$statusStyle = 'style="border-color: #f7d418 !important;"';
 																} else {
 																	$statusStyle = 'style="border-color: #000 !important;"';
 																}
@@ -344,8 +340,7 @@
 											<div class="media-right"> 
 												<div class="last-update"> <?php echo $modifiedTime; ?> </div>
 												<div class="delete-button"> 
-													<!--<i class="fa fa-trash"></i>
-													<span>Delete Parcel</span> -->
+													
 													<form method="post" action="index.php">
 														<input type="submit" name="action" value="Delete"/>
 														<input type="hidden" name="id" value="<?php echo $parcelID; ?>"/>
@@ -356,10 +351,7 @@
 										</div>
 									</div>
 								</div>
-							<?php }
-							} catch (Exception $e) {
-								echo "Trouble connecting to Trackhive, please try again."; 
-							} ?>	
+							<?php } ?>	
 							
 						</div>
 					</div>
@@ -370,3 +362,4 @@
 </div>
 </body>
 </html>
+
