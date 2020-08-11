@@ -1,113 +1,198 @@
 <html>
 <head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 <link href="styles.css" rel="stylesheet" type="text/css"/>
 <link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet" type="text/css" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ParcelPony</title>
 </head>
 
 <body>
+<?php 
+
+//----- Global Stuff -----//
+
+/*Get an API Token from my.trackinghive.com and put it here */
+$bearerToken = '';
+
+$version = "0.3";
+$alertMessage = ""; 
+$comment = "No title";
+							
+$now = new DateTime();
+$todayTS = date_timestamp_get($now);
+$today = $now->format('m/d/Y');
+
+
+//----- Functions -----//
+
+function deleteParcel($_id, $bearerToken){
+	$ch = curl_init();
+
+	curl_setopt($ch, CURLOPT_URL, "https://api.trackinghive.com/trackings/". $_id);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+	curl_setopt($ch, CURLOPT_HEADER, FALSE);
+
+	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+	  "Content-Type: application/json",
+	  "Authorization: Bearer " . $bearerToken
+	));
+
+	$response = curl_exec($ch);
+	curl_close($ch);
+
+	//var_dump($response);
+
+	$json = json_decode($response, true);
+	if ($json['meta']['code'] == 200) {
+		$alertMessage = "Removed";
+	}
+	
+	return $alertMessage;
+}
+
+function addSubscription ($_id, $bearerToken) {
+	$ch = curl_init();
+
+	curl_setopt($ch, CURLOPT_URL, "https://api.trackinghive.com/webhook/subscription");
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+	curl_setopt($ch, CURLOPT_HEADER, FALSE);
+
+	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
+
+	curl_setopt($ch, CURLOPT_POSTFIELDS, "{
+	  \"endpoint_url\": \"https://belowland.com\",
+	  \"notify_if_inactive\": true,
+	  \"email_alerts\": [
+		\"rory54@gmail.com\"
+	  ],
+	  \"active\": true,
+	  \"id\": \"" . $_id . "\"
+	}");
+
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+	  "Content-Type: application/json",
+	  "Authorization: Bearer " . $bearerToken
+	));
+
+	$response = curl_exec($ch);
+	curl_close($ch);
+
+	var_dump($response);
+}
+
+//----- Check for _POST variables -----//
+
+/* Check if a parcel was deleted */
+if(isset($_POST['action']) && isset($_POST['id'])) {
+	if ($_POST['action'] == 'Delete') {
+		$alertMessage = deleteParcel($_POST['id'], $bearerToken);
+	}
+}
+
+/* Check if a parcel was added on page load */
+if (isset($_POST["submit"]) && isset($_POST["tracking"])){
+	if ($_POST["submit"] == "Add") {
+		$trackingNum = trim($_POST["tracking"], " ");
+		$carrier = $_POST["carrier"];
+		$comment = $_POST["comment"];
+		
+		//echo $_POST['action'];
+
+		
+		//----begin trackhive code to add a parcel to your account
+		try {
+			$ch = curl_init();
+
+			curl_setopt($ch, CURLOPT_URL, "https://api.trackinghive.com/trackings");
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+			curl_setopt($ch, CURLOPT_HEADER, FALSE);
+
+			curl_setopt($ch, CURLOPT_POST, TRUE);
+
+			curl_setopt($ch, CURLOPT_POSTFIELDS, "{
+			  \"tracking_number\": \"" . $trackingNum . "\",
+			  \"slug\": \"" . $carrier . "\",
+			  \"custom_fields\": \"comment:" . $comment . "\"
+			}");
+
+			curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+			  "Content-Type: application/json",
+			  "Authorization: Bearer " . $bearerToken
+			));
+
+			$response = curl_exec($ch);
+
+			// Check the return value of curl_exec(), too
+			if ($response === false) {
+				throw new Exception(curl_error($ch), curl_errno($ch));
+			}
+
+			curl_close($ch);
+		} catch (Exception $e) {
+			trigger_error(sprintf('Curl failed with error #%d: %s', $e->getCode(), $e->getMessage()), E_USER_ERROR);
+		}
+
+		//var_dump($response);
+
+		//----end trackhive code to add a parcel to your account
+
+		$json = json_decode($response, false);
+		
+		//print_r($json);
+		
+		if ($json->meta->code == 200) {
+			$_id = $json->data->_id;
+			
+			$alertMessage = "Added";
+			//addSubscription($_id, $bearerToken);
+		} else if ($json->meta->code == 400) {
+			echo '<font color="red">Could not add package.</font><br /><br />';
+		}
+		
+		
+	}
+}
+	
+?>
+
 <div class="main">
+
+	<?php 
+	if ($alertMessage == "Added") { ?>
+	<div class="alert" id="alert-added"> 
+		<font color="green">Package added!</font>
+		<script type="text/javascript">
+			$('#alert-added').show(function(){
+				$(this).fadeOut(3000);
+			});
+		</script>
+	</div>
+	<?php } else if ($alertMessage == "Removed") { ?>
+	<div class="alert" id="alert-removed"> 
+		<font color="red">Package removed.</font>	 
+		<script type="text/javascript">
+			$('#alert-removed').show(function(){
+				$(this).fadeOut(3000);
+			});
+		</script> 
+	</div>
+	<?php } ?>
+	
 	<div class="package-inbox-view">
 		<div class="container">
 			<div class="content">
 				<div class="package-view">
-					<div class="package-container">
-						<?php
-
-							/*Get an API Token from my.trackinghive.com and put it here */
-							$bearerToken = '';
-
-							$version = "0.2.1";
-							$comment = "No title";
-							
-							$now = new DateTime();
-							$today = $now->format('m/d/Y');
-							
-							if(isset($_POST['action']) && isset($_POST['id'])) {
-								if ($_POST['action'] == 'Delete') {
-									deleteParcel($_POST['id'], $bearerToken);
-								}
-							}
-							
-							function deleteParcel($_id, $bearerToken){
-								$ch = curl_init();
-
-								curl_setopt($ch, CURLOPT_URL, "https://api.trackinghive.com/trackings/". $_id);
-								curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-								curl_setopt($ch, CURLOPT_HEADER, FALSE);
-
-								curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
-
-								curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-								  "Content-Type: application/json",
-								  "Authorization: Bearer " . $bearerToken
-								));
-
-								$response = curl_exec($ch);
-								curl_close($ch);
-
-								//var_dump($response);
-								
-								$json = json_decode($response, true);
-								if ($json['meta']['code'] == 200) {
-									echo '<font color="red">Package removed!</font><br /><br />';
-								}
-							}
-
-							// Check if a parcel was added on page load//
-							if (isset($_POST["tracking"])){
-								$trackingNum = trim($_POST["tracking"], " ");
-								$carrier = $_POST["carrier"];
-								$comment = $_POST["comment"];
-
-								
-								//----begin trackhive code to add a parcel to your account
-								try {
-									$ch = curl_init();
-
-									curl_setopt($ch, CURLOPT_URL, "https://api.trackinghive.com/trackings");
-									curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-									curl_setopt($ch, CURLOPT_HEADER, FALSE);
-
-									curl_setopt($ch, CURLOPT_POST, TRUE);
-
-									curl_setopt($ch, CURLOPT_POSTFIELDS, "{
-									  \"tracking_number\": \"" . $trackingNum . "\",
-									  \"slug\": \"" . $carrier . "\",
-									  \"custom_fields\": \"comment:" . $comment . "\"
-									}");
-
-									curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-									  "Content-Type: application/json",
-									  "Authorization: Bearer " . $bearerToken
-									));
-
-									$response = curl_exec($ch);
-
-									// Check the return value of curl_exec(), too
-									if ($response === false) {
-										throw new Exception(curl_error($ch), curl_errno($ch));
-									}
-
-									curl_close($ch);
-								} catch (Exception $e) {
-									trigger_error(sprintf('Curl failed with error #%d: %s', $e->getCode(), $e->getMessage()), E_USER_ERROR);
-								}
-
-								//var_dump($response);
-
-								//----end trackhive code to add a parcel to your account
-
-								$json = json_decode($response, true);
-								
-								//print_r($json);
-								
-								if ($json['meta']['code'] == 200) {
-									echo '<font color="red">Package added!</font><br /><br />';
-								}
-							}
-						?>
+					<!-- Logo -->
+					<div class="logo-view">
+						<a href="index.php">
+							<img class="logo" src="ParcelPonyLogo.png" />
+						</a>
+					</div>
 						
+					<div class="package-container">
 						<!-- Enter tracking number -->
 						<div class="tracking">
 							<form action="index.php" method="post" class="track-form">
@@ -137,13 +222,14 @@
 								
 							</select>
 
-							<input type="submit" value="Add" class="track-form-input">
+							<input type="submit" name="submit" value="Add" class="track-form-input">
 						</div>
 
 						<!-- Show parcels -->
 						<div class="parcels">
 							<?php
 								//----begin trackhive code to get list of parcels
+								try {
 								$ch = curl_init();
 
 								curl_setopt($ch, CURLOPT_URL, "https://api.trackinghive.com/trackings?pageId=1&limit=20");
@@ -176,17 +262,28 @@
 									
 									if ($mydata->trackings->expected_delivery != null){
 										$expTS = $mydata->trackings->expected_delivery;
-										$expectedDelivery = "Expected Delivery is " . date("m/d/y", strtotime($expTS));
+										$expDelivery = date("m/d/Y", strtotime($expTS));
+										
+										if ($expDelivery == $today){
+											$expectedDelivery = "Expected Delivery Today";
+										}
+										else {
+											$expectedDelivery = "Expected Delivery is " . date("m/d/y", strtotime($expTS));
+										}
+										
 										$scheduled = true;
 									} else {
 										if ($mydata->trackings->tag == "Delivered") {
 											$shipTS = $mydata->trackings->shipment_delivery_date;
-											$shipmentDelivery = date("m/d/y", strtotime($shipTS));
+											$shipmentDelivery = date("m/d/Y", strtotime($shipTS));
+																						
+											$shipSecsAgo = $todayTS - strtotime($shipTS);
+											$shipDaysAgo = $shipSecsAgo / 86400;
 											
 											if ($shipmentDelivery == $today) {
 												$expectedDelivery = "Today";
 											} else {											
-												$expectedDelivery = "About " . $mydata->trackings->delivery_time . " Days Ago";
+												$expectedDelivery = "About " . ceil($shipDaysAgo) . " Days Ago";
 											}
 										} else {
 											$expectedDelivery = $mydata->trackings->delivery_time . " Days Ago";  
@@ -376,7 +473,11 @@
 										</div>
 									</div>
 								</div>
-							<?php } ?>	
+							<?php }
+								}catch (Exception $e){
+									echo "Error getting parcels:" . $e;
+								}
+							?>
 							
 						</div>
 					</div>
