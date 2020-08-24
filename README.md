@@ -6,7 +6,7 @@ Requirements:
  - An API key from https://my.trackinghive.com/
  
 Features:
- - Track parcels from USPS, UPS, FedEx, and DHL
+ - Track parcels from USPS, UPS, FedEx, DHL, and more
  - Responsive design that works on desktop and mobile
 
 Instructions:
@@ -20,3 +20,4 @@ Instructions:
  6. Go to http://localhost/parcelpony and start adding parcels to track
  
  
+ NOTE: You can enable email notifications on TrackingHive for all parcels you add.
