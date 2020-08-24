@@ -44,13 +44,11 @@ a {
   width: 1075px;
   margin-right: auto;
   margin-left: auto;
-  padding-left: 15px;
-  padding-right: 15px;
   box-sizing: border-box;
 }
 
 .content {
-  margin-left: -15px;
+  margin-left: -30px;
   margin-right: -15px;
   box-sizing: border-box;  
 }
@@ -82,13 +80,13 @@ a {
 .package-container {
   position: relative;
   min-height: 100%;
-  margin-top: 10px;
   padding: 20px;
   margin-bottom: 10px;
   background: #fff;
   box-shadow: 0px 0px 4px 0px rgba(0,0,0,0.2);
   border-radius: 2px;
   box-sizing: border-box;
+  overflow: auto;
 }
 
 .logo-view {
@@ -111,10 +109,8 @@ a {
 .parcel-item {
   padding-top: 10px;
   padding-bottom: 15px;
-  min-height: 150px;
-  border-top: 1px solid #ddd;
+  min-height: 170px;
   box-sizing: border-box;
-  
 }
 
 .row {
@@ -126,12 +122,14 @@ a {
 .media-box {
   padding-left: 15px;
   padding-right: 25px;
-  width: 100%;
+  width: 985px;
   float: left;
   position: relative;
+  border-top: 1px solid #ddd;
 }
 
 .media {
+	padding-top: 10px;
 	padding-left: 15px;
 	padding-right: 25px;
 	width: 83.33333333%;
@@ -139,6 +137,7 @@ a {
 	position: relative;
 	min-height: 1px;
 	box-sizing: border-box;
+    cursor: pointer;
 }
 
 .media-right {
@@ -156,8 +155,24 @@ a {
   display: table-cell;
   vertical-align: top;
   box-sizing: border-box;
-
 }
+
+.media-click-text {
+	position: relative;
+	float: left;
+	max-width: 100%;
+	padding-left: 45%;
+	padding-bottom: 10px;
+	color: #9e9e9e;
+    cursor: pointer;
+}
+
+.media-track {
+  display: none;
+  float: left;
+  width: 100%;
+}
+
 
 .info {
   display: block;
@@ -282,6 +297,8 @@ input[type=button], input[type=submit] {
 .info-middle {
   box-sizing: border-box;
   padding-top: 3px;
+  display: flex;
+  flex-direction: column;
 }
 
 .loc {
@@ -351,6 +368,7 @@ input[type=button], input[type=submit] {
   text-overflow: ellipsis;
   white-space: nowrap;
   box-sizing: border-box;
+  min-height: 20px;
 }
 
 .last-update {
@@ -436,7 +454,7 @@ a {
 
 .content {
   box-sizing: border-box;
-  
+  margin: 0px;
 }
 
 .package-view {
@@ -508,13 +526,13 @@ a {
 
 .parcels {
   padding: 2px;
+  overflow: auto;
 }
 
 .parcel-item {
   padding-top: 10px;
   padding-bottom: 15px;
-  min-height: 150px;
-  border-top: 1px solid #ddd;
+  min-height: 160px;
   box-sizing: border-box;
   
 }
@@ -533,6 +551,7 @@ a {
   position: relative;
   display: flex;
   flex-direction: column;
+  min-height: 150.5px;
 }
 
 .media {
@@ -543,6 +562,15 @@ a {
 	min-height: 1px;
 	box-sizing: border-box;
 	width: auto;
+}
+
+.media-click-text {
+	padding-left: 30%;
+}
+
+.media-track {
+	font-size: 12px;
+	width: 90%;
 }
 
 .media-right {
@@ -754,6 +782,7 @@ a {
   white-space: nowrap;
   box-sizing: border-box;
   padding-left: 10px;
+  min-height: 20px;
 }
 
 .last-update {

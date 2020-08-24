@@ -15,8 +15,11 @@
 /*Get an API Token from my.trackinghive.com and put it here */
 $bearerToken = '';
 
-$version = "0.3";
+$version = "0.4";
+
+//echo "Setting alertMessage to ' '<br />";
 $alertMessage = ""; 
+
 $comment = "No title";
 							
 $now = new DateTime();
@@ -25,6 +28,10 @@ $today = $now->format('m/d/Y');
 
 
 //----- Functions -----//
+
+
+
+//-- PHP Stuff --//
 
 function deleteParcel($_id, $bearerToken){
 	$ch = curl_init();
@@ -47,7 +54,9 @@ function deleteParcel($_id, $bearerToken){
 
 	$json = json_decode($response, true);
 	if ($json['meta']['code'] == 200) {
+		//echo '<font color="red">Package removed!</font><br /><br />';
 		$alertMessage = "Removed";
+		//echo $alertMessage;
 	}
 	
 	return $alertMessage;
@@ -146,7 +155,9 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 		if ($json->meta->code == 200) {
 			$_id = $json->data->_id;
 			
+			//echo '<font color="green">Package added!</font><br /><br />';
 			$alertMessage = "Added";
+			//echo $alertMessage;
 			//addSubscription($_id, $bearerToken);
 		} else if ($json->meta->code == 400) {
 			echo '<font color="red">Could not add package.</font><br /><br />';
@@ -161,6 +172,8 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 <div class="main">
 
 	<?php 
+	//echo $alertMessage;
+	
 	if ($alertMessage == "Added") { ?>
 	<div class="alert" id="alert-added"> 
 		<font color="green">Package added!</font>
@@ -251,7 +264,7 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 								$json = json_decode($response, false);
 
 								//print_r($json);
-								
+								try {
 								foreach ($json->data as $mydata) {
 									$custom_fields = explode(':', $mydata->custom_fields);
 									$comment = $custom_fields[1];
@@ -268,7 +281,7 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 											$expectedDelivery = "Expected Delivery Today";
 										}
 										else {
-											$expectedDelivery = "Expected Delivery is " . date("m/d/y", strtotime($expTS));
+											$expectedDelivery = "Expected Delivery is " . date("l, m/d/y", strtotime($expTS));
 										}
 										
 										$scheduled = true;
@@ -335,23 +348,6 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 											$carrier = $carriers->title;
 										}
 									}
-									
-									/*
-									switch ($carrier_slug){
-										case 'usps':
-											$carrier = 'USPS';
-											break;
-										case 'ups':
-											$carrier = 'UPS';
-											break;
-										case 'fedex':
-											$carrier = 'FedEx';
-											break;
-										case 'dhl':
-											$carrier = 'DHL';
-											break;
-									}
-									*/
 
 									$trackingNum = $mydata->tracking_number;
 									
@@ -470,10 +466,39 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 													</form>
 												</div>
 											</div>
+											<div class="media-click-text">
+												Click to Expand
+											</div>
+											<div class="media-track">
+											<ul class="fa-ul">
+											<?php
+																																	
+												$count = 0;
+												foreach (array_reverse($mydata->trackings->checkpoints) as $checkpoint) {
+													$cTS = $checkpoint->checkpoint_time;
+													$checkpointTime = date("m-d-Y H:i:s", strtotime($cTS));
+													
+													if ($count == 0){
+														echo '<li><span class="fa-il"><i class="fa fa-circle"></i></span><b> ' . $checkpointTime . "   " . $checkpoint->location . " " . $checkpoint->message . "</b></li>";
+														echo '<li>&nbsp;<span class="fa-il"><i class="fas fa-long-arrow-alt-up"></i></span>';
+													} else if ($count == count($mydata->trackings->checkpoints)-1){
+														echo '<li><span class="fa-il"><i class="far fa-circle"></i></span> ' . $checkpointTime . "   " . $checkpoint->location . " " . $checkpoint->message . "</li>";
+													} else {
+														echo '<li><span class="fa-il"><i class="far fa-circle"></i></span> ' . $checkpointTime . "   " . $checkpoint->location . " " . $checkpoint->message . "</li>";
+														echo '<li>&nbsp;<span class="fa-il"><i class="fas fa-long-arrow-alt-up"></i></span>';
+													}
+													$count++;
+												}
+											?>
+											</ul>
+										</div>
 										</div>
 									</div>
 								</div>
 							<?php }
+								}catch (Exception $e) {
+									echo "Error getting parcels:" . $e;
+								}
 								}catch (Exception $e){
 									echo "Error getting parcels:" . $e;
 								}
@@ -490,6 +515,38 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 		</div>
 	</div>
 </div>
+
+<script type="text/javascript">
+$(".media").click(function() {
+
+	if ($(this).nextAll( ".media-track" ).css("display") == "block") {
+		$(this).nextAll( ".media-click-text" ).text('Click to Expand');
+	} else {
+		$(this).nextAll( ".media-click-text" ).text('Click to Close');
+	}
+	
+	$(this).nextAll( ".media-track" ).slideToggle(100, function() {
+		return $(this).nextAll( ".media-track" ).is(":visible");
+	});
+
+});
+
+$(".media-click-text").click(function() {
+
+    var link = $(this);
+	if ($(this).next( ".media-track" ).css("display") == "block") {
+		link.text('Click to Expand');
+	} else {
+		link.text('Click to Close');
+	}
+	
+	$(this).nextAll( ".media-track" ).slideToggle(100, function() {
+		return $(this).nextAll( ".media-track" ).is(":visible");
+	});
+
+});
+</script>
+
 </body>
 </html>
 
