@@ -1,0 +1,20 @@
+{
+	"name":"ParcelPony",
+	"short_name":"ParcelPony",
+	"icons":[
+		{
+			"src":"android-chrome-192x192.png",
+			"sizes":"192x192",
+			"type":"image/png"
+		},
+		{
+			"src":"android-chrome-512x512.png",
+			"sizes":"512x512",
+			"type":"image/png"
+		}
+	],
+	"theme_color":"#94b5eb",
+	"background_color":"#94b5eb",
+	"display":"browser",
+	"start_url": "index.php"
+}

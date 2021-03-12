@@ -1,6 +1,5 @@
 <?php
 
-/*Get an API Token from my.trackinghive.com and put it here */
 $bearerToken = '';
 
 if (isset($_POST["tracking"])){
@@ -119,15 +118,9 @@ if (isset($_POST["tracking"])){
 				
 				//call custom function for formatting json data
 				echo pretty_print($data);
-			}
-		}
-		
-		
-	}
-
-?>
-r formatting json data
-				echo pretty_print($data);
+				
+				//print unfiltered json
+				print_r($data);
 			}
 		}
 		

@@ -16,6 +16,10 @@ a {
  text-decoration: none;
 }
 
+td {
+	border: 1px solid black;
+}
+
 .hidden-ux {
 	visibility: hidden;
 }
@@ -98,12 +102,27 @@ a {
   	text-align: center;
 }
 
+.nav {
+	text-align: center;
+}
+
 .tracking {
   padding: 20px 0 0 10px;
 }
 
 .parcels {
   padding: 10px;
+}
+
+.parcel-header {
+  padding-top: 10px;
+  padding-bottom: 15px;
+  min-height: 170px;
+  box-sizing: border-box;
+}
+
+.parcel-table {
+	
 }
 
 .parcel-item {
@@ -137,7 +156,6 @@ a {
 	position: relative;
 	min-height: 1px;
 	box-sizing: border-box;
-    cursor: pointer;
 }
 
 .media-right {
@@ -211,13 +229,14 @@ input[type=button], input[type=submit] {
   display: table-cell;
   vertical-align: top;
   box-sizing: border-box;
-
   overflow: hidden;
+  width: 100%;
+  cursor: pointer;
 }
 
 /*Date Time*/
 .datetime-info {
-  width: 75px;
+  width: 100px;
   text-align: center;
   margin-top: 5px;
   box-sizing: border-box;
@@ -319,6 +338,7 @@ input[type=button], input[type=submit] {
   text-transform: uppercase;
   border: 1px solid #888 !important;
   color: #666 !important;
+  width: max-content;
 }
 
 .info-more {
@@ -625,7 +645,7 @@ a {
 
 /*Date Time*/
 .datetime-info {
-  width: 60px;
+  width: 80px;
   text-align: center;
   margin-top: 0px;
   box-sizing: border-box;

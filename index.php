@@ -3,11 +3,18 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 <link href="styles.css" rel="stylesheet" type="text/css"/>
 <link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet" type="text/css" />
+
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="manifest" href="site.webmanifest">
+
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#94b5eb"/>
 <title>ParcelPony</title>
 </head>
 
-<body>
+<body onload = "Javascript:AutoRefresh(1800000);">
 <?php 
 
 //----- Global Stuff -----//
@@ -15,7 +22,7 @@
 /*Get an API Token from my.trackinghive.com and put it here */
 $bearerToken = '';
 
-$version = "0.4";
+$version = "0.5.2";
 
 //echo "Setting alertMessage to ' '<br />";
 $alertMessage = ""; 
@@ -32,6 +39,17 @@ $today = $now->format('m/d/Y');
 
 
 //-- PHP Stuff --//
+
+set_error_handler('exceptions_error_handler');
+
+function exceptions_error_handler($severity, $message, $filename, $lineno) {
+  if (error_reporting() == 0) {
+    return;
+  }
+  if (error_reporting() & $severity) {
+    throw new ErrorException($message, 0, $severity, $filename, $lineno);
+  }
+}
 
 function deleteParcel($_id, $bearerToken){
 	$ch = curl_init();
@@ -124,7 +142,8 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 			curl_setopt($ch, CURLOPT_POSTFIELDS, "{
 			  \"tracking_number\": \"" . $trackingNum . "\",
 			  \"slug\": \"" . $carrier . "\",
-			  \"custom_fields\": \"comment:" . $comment . "\"
+			  \"customer_name\": \"" . $comment . "\",
+			  \"custom_fields\": \"direction:inbound\"
 			}");
 
 			curl_setopt($ch, CURLOPT_HTTPHEADER, array(
@@ -206,6 +225,9 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 					</div>
 						
 					<div class="package-container">
+						<div class="nav">
+							<a href="index.php">Incoming</a> | <a href="outgoing.php">Outgoing</a>
+						</div>
 						<!-- Enter tracking number -->
 						<div class="tracking">
 							<form action="index.php" method="post" class="track-form">
@@ -217,6 +239,7 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 							
 							<?php
 							/*Get all carriers*/
+							try {
 								$ch = curl_init();
 
 								curl_setopt($ch, CURLOPT_URL, "https://api.trackinghive.com/couriers/list");
@@ -231,6 +254,9 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 								foreach ($carrier_json->data as $carriers) {
 										echo '<option value="' . $carriers->slug . '">' . $carriers->title . '</option>';
 								}
+							}catch (Exception $e) {
+								echo "<h1>Error getting parcels.</h1> <br />There might be a problem connecting to TrackingHive or you haven't specified your API Token.";
+							}
 							?>
 								
 							</select>
@@ -242,7 +268,7 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 						<div class="parcels">
 							<?php
 								//----begin trackhive code to get list of parcels
-								try {
+								
 								$ch = curl_init();
 
 								curl_setopt($ch, CURLOPT_URL, "https://api.trackinghive.com/trackings?pageId=1&limit=20");
@@ -264,99 +290,128 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 								$json = json_decode($response, false);
 
 								//print_r($json);
+								//echo  "Is goodbye empty? " . empty($json->{'data'});
+								
 								try {
 								foreach ($json->data as $mydata) {
 									$custom_fields = explode(':', $mydata->custom_fields);
-									$comment = $custom_fields[1];
-									$infoStatus = $mydata->current_status;
-									$parcelID = $mydata->_id;
-									$carrier_slug = $mydata->slug;
-									$scheduled = false;
-									
-									if ($mydata->trackings->expected_delivery != null){
-										$expTS = $mydata->trackings->expected_delivery;
-										$expDelivery = date("m/d/Y", strtotime($expTS));
-										
-										if ($expDelivery == $today){
-											$expectedDelivery = "Expected Delivery Today";
-										}
-										else {
-											$expectedDelivery = "Expected Delivery is " . date("l, m/d/y", strtotime($expTS));
-										}
-										
-										$scheduled = true;
-									} else {
-										if ($mydata->trackings->tag == "Delivered") {
-											$shipTS = $mydata->trackings->shipment_delivery_date;
-											$shipmentDelivery = date("m/d/Y", strtotime($shipTS));
-																						
-											$shipSecsAgo = $todayTS - strtotime($shipTS);
-											$shipDaysAgo = $shipSecsAgo / 86400;
-											
-											if ($shipmentDelivery == $today) {
-												$expectedDelivery = "Today";
-											} else {											
-												$expectedDelivery = "About " . ceil($shipDaysAgo) . " Days Ago";
-											}
-										} else {
-											$expectedDelivery = $mydata->trackings->delivery_time . " Days Ago";  
-										}
+									if ($custom_fields[1] == "inbound") {
+										$direction = $custom_fields[1];
+										$comment = $mydata->customer_name;
+										$infoStatus = $mydata->current_status;
+										$parcelID = $mydata->_id;
+										$carrier_slug = $mydata->slug;
+										$scheduled = false;
+									} else if ($custom_fields[1] == "outgoing") {
+										$direction = $custom_fields[1];
+										$comment = $mydata->customer_name;
+										$infoStatus = $mydata->current_status;
+										$parcelID = $mydata->_id;
+										$carrier_slug = $mydata->slug;
+										$scheduled = false;
+									}else {
+										$direction = "inbound";
+										$comment = $custom_fields[1];
+										$infoStatus = $mydata->current_status;
+										$parcelID = $mydata->_id;
+										$carrier_slug = $mydata->slug;
+										$scheduled = false;
 									}
 									
-									if ($scheduled == false){
-										if (count($mydata->trackings->checkpoints) > 0) {
-											if (end($mydata->trackings->checkpoints)->checkpoint_time) {
-												$timestamp = end($mydata->trackings->checkpoints)->checkpoint_time;
+									
+									//echo $json->meta->code . "<br />";
+									if ($direction == "inbound") {
+										if ($mydata->trackings->expected_delivery != null){
+											$expTS = $mydata->trackings->expected_delivery;
+											$expDelivery = date("m/d/Y", strtotime($expTS));
+											
+											if ($expDelivery == $today){
+												$expectedDelivery = "Expected Delivery Today";
+											}
+											else {
+												$expectedDelivery = "Expected Delivery is " . date("l, m/d/y", strtotime($expTS));
+											}
+											
+											$scheduled = true;
+										} else {
+											if ($mydata->trackings->tag == "Delivered") {
+												$shipTS = $mydata->trackings->shipment_delivery_date;
+												$shipmentDelivery = date("m/d/Y", strtotime($shipTS));
+																							
+												$shipSecsAgo = $todayTS - strtotime($shipTS);
+												$shipDaysAgo = $shipSecsAgo / 86400;
+												
+												if ($shipmentDelivery == $today) {
+													$expectedDelivery = "Today";
+												} else {											
+													$expectedDelivery = "About " . ceil($shipDaysAgo) . " Days Ago";
+												}
+											} else {
+												//echo "no update in " . $mydata->trackings->delivery_time . " days";
+												$expectedDelivery = "Last updated about " . $mydata->trackings->delivery_time . " days ago";  
+											}
+										}
+										
+										if ($scheduled == false){
+											//echo "checkpoints = ". count($mydata->trackings->checkpoints);
+											if (count($mydata->trackings->checkpoints) > 0) {
+												if (end($mydata->trackings->checkpoints)->checkpoint_time) {
+													$timestamp = end($mydata->trackings->checkpoints)->checkpoint_time;
+													$tsMonth = date("F", strtotime($timestamp));
+													$tsDay = date("j", strtotime($timestamp));
+													$tsTime = date("H:i:s", strtotime($timestamp));
+												} 
+												else {
+													$tsMonth = "NULL";
+													$tsDay = "NULL";
+													$tsTime = "NULL";
+												}
+											} else {
+												$timestamp = $mydata->created;
 												$tsMonth = date("F", strtotime($timestamp));
 												$tsDay = date("j", strtotime($timestamp));
 												$tsTime = date("H:i:s", strtotime($timestamp));
-											} 
+											}
 										} else {
-											$timestamp = $mydata->created;
-											$tsMonth = date("F", strtotime($timestamp));
-											$tsDay = date("j", strtotime($timestamp));
-											$tsTime = date("H:i:s", strtotime($timestamp));
+											$tsMonth = date("F", strtotime($expTS));
+											$tsDay = date("j", strtotime($expTS));
+											$tsTime = "Scheduled";
 										}
-									} else {
-										$tsMonth = date("F", strtotime($expTS));
-										$tsDay = date("j", strtotime($expTS));
-										$tsTime = "Scheduled";
-									}
-									
-									if (count($mydata->trackings->checkpoints) > 0) {
-										if (end($mydata->trackings->checkpoints)->location) {
-											$lastLoc = end($mydata->trackings->checkpoints)->location;
+										
+										if (count($mydata->trackings->checkpoints) > 0) {
+											if (end($mydata->trackings->checkpoints)->location) {
+												$lastLoc = end($mydata->trackings->checkpoints)->location;
+											} else {
+											$lastLoc = "N/A";
+										}
 										} else {
-										$lastLoc = "N/A";
-									}
-									} else {
-										$lastLoc = "N/A";
-									}
-									
-									if (count($mydata->trackings->checkpoints) > 0) {
-										if (end($mydata->trackings->checkpoints)->message) {
-											$infoMore = end($mydata->trackings->checkpoints)->message;
+											$lastLoc = "N/A";
+										}
+										
+										if (count($mydata->trackings->checkpoints) > 0) {
+											if (end($mydata->trackings->checkpoints)->message) {
+												$infoMore = end($mydata->trackings->checkpoints)->message;
+											} else {
+												$infoMore = "N/A";
+											}
 										} else {
 											$infoMore = "N/A";
 										}
-									} else {
-										$infoMore = "N/A";
-									}
-									
-									foreach ($carrier_json->data as $carriers){
-										if ($carrier_slug == $carriers->slug){
-											$carrier = $carriers->title;
-										}
-									}
-
-									$trackingNum = $mydata->tracking_number;
-									
-									$modTS = $mydata->modified;
-									$modTime = strtotime($modTS);
-									$nowTS = $now->getTimestamp();
-									$modifiedTime = "About " . date('g', $nowTS - $modTime) . " hours ago";
-									//echo "About " . date('g', $nowTS - $modTime) . " hours ago";
 										
+										foreach ($carrier_json->data as $carriers){
+											if ($carrier_slug == $carriers->slug){
+												$carrier = $carriers->title;
+											}
+										}
+
+										$trackingNum = $mydata->tracking_number;
+										
+										$modTS = $mydata->modified;
+										$modTime = strtotime($modTS);
+										$nowTS = $now->getTimestamp();
+										$modifiedTime = "About " . date('g', $nowTS - $modTime) . " hours ago";
+										//echo "About " . date('g', $nowTS - $modTime) . " hours ago";
+											
 								?>
 								<div class="parcel-item">	
 									<div class="row">
@@ -369,6 +424,8 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 														<div class="datetime-info-time"> <?php echo $tsTime;  ?> </div>
 													</div>
 													<?php
+														$carrierNull = false;
+														
 														switch ($carrier_slug){
 															case 'usps':
 																$carrier_link = 'https://tools.usps.com/go/TrackConfirmAction?qtc_tLabels1=';
@@ -382,7 +439,13 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 															case 'dhl':
 																$carrier_link = 'https://www.dhl.com/en/express/tracking.html?AWB=';
 																break;
+															default:
+																$carrier_link = '';
+																$carrierNull = true;
+																break;
 														}
+														
+													if ($carrierNull == false) {
 													?>
 													<a href="<?php echo $carrier_link . $trackingNum; ?>" target="_new">
 														<span class="info">
@@ -390,6 +453,17 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 															<span class="track">track</span>
 														</span>
 													</a>
+													<?php 
+													} else {
+													?>
+														
+														<span class="info">
+															N/A
+														</span>
+													
+													<?php
+													}
+													?>
 												</div>
 												<div class="media-body">
 													<div class="info-container">
@@ -478,7 +552,9 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 													$cTS = $checkpoint->checkpoint_time;
 													$checkpointTime = date("m-d-Y H:i:s", strtotime($cTS));
 													
-													if ($count == 0){
+													if ($count == 0 && count($mydata->trackings->checkpoints) == 1) {
+														echo '<li><span class="fa-il"><i class="fa fa-circle"></i></span> ' . $checkpointTime . "   " . $checkpoint->location . " " . $checkpoint->message . "</li>";
+													} else if ($count == 0){
 														echo '<li><span class="fa-il"><i class="fa fa-circle"></i></span><b> ' . $checkpointTime . "   " . $checkpoint->location . " " . $checkpoint->message . "</b></li>";
 														echo '<li>&nbsp;<span class="fa-il"><i class="fas fa-long-arrow-alt-up"></i></span>';
 													} else if ($count == count($mydata->trackings->checkpoints)-1){
@@ -487,6 +563,7 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 														echo '<li><span class="fa-il"><i class="far fa-circle"></i></span> ' . $checkpointTime . "   " . $checkpoint->location . " " . $checkpoint->message . "</li>";
 														echo '<li>&nbsp;<span class="fa-il"><i class="fas fa-long-arrow-alt-up"></i></span>';
 													}
+													//echo $count . "<br />";
 													$count++;
 												}
 											?>
@@ -495,12 +572,15 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 										</div>
 									</div>
 								</div>
-							<?php }
-								}catch (Exception $e) {
-									echo "Error getting parcels:" . $e;
+							<?php 
+									}
 								}
-								}catch (Exception $e){
-									echo "Error getting parcels:" . $e;
+								}catch (Exception $e) {
+									if (empty($json->{'data'}) == 1){
+										echo "<h1>Error getting parcels.</h1> <br />There was a problem connecting to TrackingHive. Please try again in a few minutes.";
+									} else {
+										echo "<h1>Error getting parcels.</h1> <br />There might be a problem connecting to TrackingHive or you haven't specified your API Token. <br /><br />Exception: " . $e;
+									}
 								}
 							?>
 							
@@ -517,16 +597,16 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 </div>
 
 <script type="text/javascript">
-$(".media").click(function() {
+$(".media-body").click(function() {
 
-	if ($(this).nextAll( ".media-track" ).css("display") == "block") {
-		$(this).nextAll( ".media-click-text" ).text('Click to Expand');
+	if ($(this).closest(".media-box").find( ".media-track" ).css("display") == "block") {
+		$(this).closest(".media-box").find( ".media-click-text" ).text('Click to Expand');
 	} else {
-		$(this).nextAll( ".media-click-text" ).text('Click to Close');
+		$(this).closest(".media-box").find( ".media-click-text" ).text('Click to Close');
 	}
 	
-	$(this).nextAll( ".media-track" ).slideToggle(100, function() {
-		return $(this).nextAll( ".media-track" ).is(":visible");
+	$(this).closest(".media-box").find( ".media-track" ).slideToggle(100, function() {
+		return $(this).closest(".media-box").find( ".media-track" ).is(":visible");
 	});
 
 });
@@ -545,6 +625,10 @@ $(".media-click-text").click(function() {
 	});
 
 });
+
+function AutoRefresh( t ) {
+    setTimeout("location.reload(true);", t);
+}
 </script>
 
 </body>
