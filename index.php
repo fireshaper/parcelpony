@@ -17,10 +17,12 @@
 <body onload = "Javascript:AutoRefresh(1800000);">
 <?php 
 
+$config = include('config.php');
+
 //----- Global Stuff -----//
 
 /*Get an API Token from my.trackinghive.com and put it here */
-$bearerToken = '';
+$bearerToken = $config['BearerToken'];
 
 $version = "0.5.2";
 
@@ -81,6 +83,7 @@ function deleteParcel($_id, $bearerToken){
 }
 
 function addSubscription ($_id, $bearerToken) {
+	return;
 	$ch = curl_init();
 
 	curl_setopt($ch, CURLOPT_URL, "https://api.trackinghive.com/webhook/subscription");
@@ -108,6 +111,16 @@ function addSubscription ($_id, $bearerToken) {
 	curl_close($ch);
 
 	var_dump($response);
+}
+
+function getCustomFields($rawFields) {
+	if(is_string($rawFields)) {
+		$fields = explode(':', $rawFields);
+        return (object)[ $fields[0] => $fields[1] ];
+	} else if (is_object($rawFields)){
+		return $rawFields;
+	}
+	return (object)[];
 }
 
 //----- Check for _POST variables -----//
@@ -142,8 +155,11 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 			curl_setopt($ch, CURLOPT_POSTFIELDS, "{
 			  \"tracking_number\": \"" . $trackingNum . "\",
 			  \"slug\": \"" . $carrier . "\",
+			  \"source\": \"parcelpony\",
 			  \"customer_name\": \"" . $comment . "\",
-			  \"custom_fields\": \"direction:inbound\"
+			  \"custom_fields\": {
+			    \"direction\":\"inbound\"
+			  }
 			}");
 
 			curl_setopt($ch, CURLOPT_HTTPHEADER, array(
@@ -294,30 +310,21 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 								
 								try {
 								foreach ($json->data as $mydata) {
-									$custom_fields = explode(':', $mydata->custom_fields);
-									if ($custom_fields[1] == "inbound") {
-										$direction = $custom_fields[1];
-										$comment = $mydata->customer_name;
-										$infoStatus = $mydata->current_status;
-										$parcelID = $mydata->_id;
-										$carrier_slug = $mydata->slug;
-										$scheduled = false;
-									} else if ($custom_fields[1] == "outgoing") {
-										$direction = $custom_fields[1];
-										$comment = $mydata->customer_name;
-										$infoStatus = $mydata->current_status;
-										$parcelID = $mydata->_id;
-										$carrier_slug = $mydata->slug;
-										$scheduled = false;
-									}else {
-										$direction = "inbound";
-										$comment = $custom_fields[1];
-										$infoStatus = $mydata->current_status;
-										$parcelID = $mydata->_id;
-										$carrier_slug = $mydata->slug;
-										$scheduled = false;
+									$custom_fields = getCustomFields(isset($mydata->custom_fields) ? $mydata->custom_fields : null); //explode(':', $mydata->custom_fields);
+									$direction = "inbound";
+									$infoStatus = $mydata->current_status;
+									$parcelID = $mydata->_id;
+									$carrier_slug = $mydata->slug;
+									$scheduled = false;
+									$comment = '';
+									if (isset($custom_fields->direction)) {
+										$direction = $custom_fields->direction;
 									}
-									
+									if (isset($mydata->customer_name)){
+										$comment = $mydata->customer_name;
+									} else if (isset($custom_fields->comment)){
+										$comment = $custom_fields->comment;
+									}
 									
 									//echo $json->meta->code . "<br />";
 									if ($direction == "inbound") {
