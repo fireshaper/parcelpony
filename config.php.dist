@@ -1,0 +1,15 @@
+<?php
+
+$config = array();
+
+/*Get an API Token from my.trackinghive.com and put it here */
+$config['BearerToken'] = '';
+
+$config['Subscription'] = [
+	'Enabled' => false,
+	'Endpoint' => '',
+	'Emails' => [],
+];
+
+return $config;
+?>
