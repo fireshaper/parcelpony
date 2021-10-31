@@ -1,6 +1,8 @@
 <?php
 
-$bearerToken = '';
+$config = include("config.php");
+
+$bearerToken = $config["BearerToken"];
 
 if (isset($_POST["tracking"])){
 	$trackingNum = trim($_POST["tracking"], " ");
