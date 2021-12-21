@@ -266,6 +266,10 @@ if (isset($_POST["submit"]) && isset($_POST["tracking"])){
 								curl_close($ch);
 								
 								$carrier_json = json_decode($response, false);
+
+								usort($carrier_json->data, function ($a, $b) {
+									return $a->title <=> $b->title;
+								});
 								
 								foreach ($carrier_json->data as $carriers) {
 										echo '<option value="' . $carriers->slug . '">' . $carriers->title . '</option>';
