@@ -1,5 +1,7 @@
 **ParcelPony - Selfhosted Parcel Tracking**
 
+**Because Trackhive is no longer active I have made the decision to abandon this project. If another API like trackhive becomes available I may pick this back up in the future. Do not expect any updates to this project.**
+
 Requirements:
  - A web server
  - PHP
